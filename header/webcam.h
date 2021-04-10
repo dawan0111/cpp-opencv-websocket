@@ -1,13 +1,14 @@
 #ifndef WEBCAM_H
 #define WEBCAM_H
 #include <opencv2/opencv.hpp>
+#include "./sensorData.h"
 
 class Webcam
 {
 private:
-	cv::Mat* image;
+	SensorData* sensorData;
 public:
-	Webcam(cv::Mat* _image);
+	Webcam(SensorData* _image);
 	static void *run(void* cam);
 };
 
