@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+        
+        </head>
+    <body>
+        <h1>WebSockets test</h1>
+        <canvas id="myCanvas" width="640" height="480"></canvas>
+        <form>
+            <input type="text" />
+            <button>Send</button>
+        </form>
+        <div></div>
+
+        <script type="text/javascript">
+            $(function() {
+                const canvas = document.getElementById("myCanvas")
+                const ctx = canvas.getContext("2d");
+                window.WebSocket = window.WebSocket || window.MozWebSocket;
+
+                var websocket = new WebSocket('ws://10.211.55.4:9000',
+                                              'dumb-increment-protocol');
+
+                websocket.onopen = function () {
+                    $('h1').css('color', 'green');
+                };
+
+                websocket.onerror = function () {
+                    $('h1').css('color', 'red');
+                };
+
+                websocket.onmessage = function (message) {
+                    const imageData = message.data.trim().split(" ");
+                    const rgbaData = new Uint8ClampedArray(imageData.length * 4);
+
+                    for (var i = 0; i < imageData.length; i++) {
+                        rgbaData[i * 4] = +imageData[i];
+                        rgbaData[i * 4 + 1] = +imageData[i];
+                        rgbaData[i * 4 + 2] = +imageData[i];
+                        rgbaData[i * 4 + 3] = 255;
+                    }
+
+                    const canvasData = new ImageData(rgbaData, 500);
+                    ctx.putImageData(canvasData, 0, 0);
+                };
+                
+
+                $('button').click(function(e) {
+                    e.preventDefault();
+                    websocket.send($('input').val());
+                    $('input').val('');
+                });
+
+
+            });
+        </script>
+    </body>
+</html>
