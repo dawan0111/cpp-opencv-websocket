@@ -12,7 +12,9 @@
 #include "header/sensorData.h"
 #include "header/base64.h"
 
-std::map<lws *, int> lwsTime;
+#define MAX_BUFFER_SIZE 100
+
+std::map<lws *, long long> lwsTime;
 
 static std::vector<lws *> connectLWS;
 static pthread_mutex_t mutex;
@@ -35,26 +37,26 @@ static int callback_dumb_increment(struct lws *wsi, enum lws_callback_reasons re
             break;
         case 11: {
             pthread_mutex_lock(&mutex);
-            if (lwsTime[wsi] <= sensorData.imageTiming - 1000) {
-                lwsTime[wsi] = sensorData.imageTiming - 500;
+            std::string buffer_string = "";
+
+            if (lwsTime[wsi] + MAX_BUFFER_SIZE <= sensorData.imageTiming) {
+                for (int i = lwsTime[wsi]; i <= lwsTime[wsi] + MAX_BUFFER_SIZE; i++) {
+                    buffer_string += sensorData.imageQueueTiming[i]+" ";
+                }
+
+                lwsTime[wsi] += MAX_BUFFER_SIZE;
             }
-            std::string encoded_png = sensorData.imageQueueTiming[lwsTime[wsi]];
-            const int len = encoded_png.size();
+
+            const int len = buffer_string.size();
 
             if (len > 0) {
                 cout << lwsTime[wsi] << " vs " << sensorData.imageTiming << endl;
 
                 unsigned char* buffer = new unsigned char[LWS_SEND_BUFFER_PRE_PADDING + len + LWS_SEND_BUFFER_POST_PADDING];
                 for (int i = 0; i < len; i++) {
-                    buffer[LWS_SEND_BUFFER_PRE_PADDING + i] = encoded_png[i];
+                    buffer[LWS_SEND_BUFFER_PRE_PADDING + i] = buffer_string[i];
                 }
                 lws_write(wsi, &buffer[LWS_SEND_BUFFER_PRE_PADDING], len, LWS_WRITE_TEXT);
-
-                if (lwsTime[wsi] >= sensorData.imageTiming) {
-                    lwsTime[wsi] = sensorData.imageTiming;
-                } else {
-                    lwsTime[wsi] = lwsTime[wsi] + 1;
-                }
 
                 delete buffer;
             }

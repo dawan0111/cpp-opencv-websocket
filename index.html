@@ -8,6 +8,7 @@
     <body>
         <h1>WebSockets test</h1>
         <canvas id="myCanvas" width="640" height="480"></canvas>
+        <img src="" style="transform: scaleX(-1)">
         <form>
             <input type="text" />
             <button>Send</button>
@@ -15,12 +16,29 @@
         <div></div>
 
         <script type="text/javascript">
+          var buffer = [];
+
+          const canvas = document.getElementById("myCanvas")
+          const img = document.querySelector('img')
+          const ctx = canvas.getContext("2d")
+
+
+          function animate() {
+            setTimeout(() => {
+              if (buffer.length > 0) {
+                const nowBuffer = buffer.shift();
+                img.src = nowBuffer;
+              }
+              requestAnimationFrame(animate);
+            }, 1000 / 30);
+          }
+          animate();
+
             $(function() {
-                const canvas = document.getElementById("myCanvas")
-                const ctx = canvas.getContext("2d");
+                
                 window.WebSocket = window.WebSocket || window.MozWebSocket;
 
-                var websocket = new WebSocket('ws://10.211.55.4:9000',
+                var websocket = new WebSocket('ws://192.168.30.161:9000',
                                               'dumb-increment-protocol');
 
                 websocket.onopen = function () {
@@ -32,7 +50,22 @@
                 };
 
                 websocket.onmessage = function (message) {
-                    const imageData = message.data.trim().split(" ");
+                  buffer = [...buffer, ...message.data.trim().split(" ")]
+                  console.log(buffer.length)
+                    // const imageData = message.data.trim().split(" ");
+                    /*
+                    rgb
+                    const rgbaData = new Uint8ClampedArray(imageData.length / 3 * 4);
+
+                    for (var i = 0; i < imageData.length; i++) {
+                        rgbaData[i * 4] = +imageData[i * 3 + 2];
+                        rgbaData[i * 4 + 1] = +imageData[i * 3 + 1];
+                        rgbaData[i * 4 + 2] = +imageData[i * 3];
+                        rgbaData[i * 4 + 3] = 255;
+                    }
+                    */
+                   /*
+                   grayscale
                     const rgbaData = new Uint8ClampedArray(imageData.length * 4);
 
                     for (var i = 0; i < imageData.length; i++) {
@@ -41,9 +74,13 @@
                         rgbaData[i * 4 + 2] = +imageData[i];
                         rgbaData[i * 4 + 3] = 255;
                     }
-
+                    */
+                   /*
+                   use canvas
                     const canvasData = new ImageData(rgbaData, 500);
                     ctx.putImageData(canvasData, 0, 0);
+                    */
+
                 };
                 
 
